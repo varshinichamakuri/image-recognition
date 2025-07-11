@@ -1,14 +1,16 @@
 from flask import Flask, request, jsonify
-from keras.models import load_model
+from keras.models import load_model  # ✅ Use tensorflow.keras, not keras
 import numpy as np
 from PIL import Image
 from flask_cors import CORS
+import os  # ✅ Required for port binding in deployment
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS to accept requests from frontend
 
-model = load_model("cifar_model.h5")
-classes = ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
+model = load_model("cifar_model.h5")  # Make sure this file exists in the same folder
+
+classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -23,7 +25,7 @@ def predict():
 
         prediction = model.predict(img)
         class_index = np.argmax(prediction)
-        confidence = float(prediction[0][class_index])
+        confidence = float(prediction[0][class_index]) * 100
 
         return jsonify({
             "class": classes[class_index],
@@ -33,4 +35,5 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # ✅ Required for Render port binding
+    app.run(host='0.0.0.0', port=port)
